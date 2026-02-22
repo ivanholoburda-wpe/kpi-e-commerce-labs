@@ -43,8 +43,8 @@ TELEGRAM_TOKEN="<ваш токен>" docker compose up --build
 curl -i localhost:8080/health
 ```
 
-<!-- TODO: скриншот терміналу з відповіддю 200 OK -->
-![Health Check 200](screenshots/health-200.png)
+<img width="759" height="115" alt="image" src="https://github.com/user-attachments/assets/fd860924-9bd8-4da2-a497-42114170a5e7" />
+
 
 ### 503 Service Unavailable — БД зупинена
 
@@ -53,18 +53,23 @@ docker compose stop postgres
 curl -i localhost:8080/health
 ```
 
-<!-- TODO: скриншот терміналу з відповіддю 503 -->
-![Health Check 503](screenshots/health-503.png)
+<img width="1324" height="552" alt="image" src="https://github.com/user-attachments/assets/7f42091d-bee5-4779-abf8-dcbaaa479b93" />
 
 ## Приклад логів
 
 JSON-логи під час запуску застосунку:
 
 ```json
-{"time":"2026-02-16T12:00:00.000000+02:00","level":"INFO","msg":"migrations applied"}
-{"time":"2026-02-16T12:00:00.001000+02:00","level":"INFO","msg":"connected to database"}
-{"time":"2026-02-16T12:00:00.002000+02:00","level":"INFO","msg":"server started","addr":":8080"}
+{"time":"2026-02-22T16:54:40.222852926Z","level":"INFO","msg":"migrations applied"}
+{"time":"2026-02-22T16:54:40.225410801Z","level":"INFO","msg":"connected to database"}
+{"time":"2026-02-22T16:54:40.225469676Z","level":"INFO","msg":"server started","addr":":8080"}
+{"time":"2026-02-22T16:56:10.438844718Z","level":"INFO","msg":"request","method":"GET","path":"/health","status":200,"latency_ms":0,"client_ip":"192.168.65.1"}
+{"time":"2026-02-22T16:56:23.512723918Z","level":"INFO","msg":"request","method":"GET","path":"/health","status":503,"latency_ms":53,"client_ip":"192.168.65.1"}
+{"time":"2026-02-22T16:56:47.195966971Z","level":"INFO","msg":"request","method":"GET","path":"/health","status":200,"latency_ms":10,"client_ip":"192.168.65.1"}
+{"time":"2026-02-22T17:00:59.133121046Z","level":"INFO","msg":"request","method":"GET","path":"/health","status":503,"latency_ms":5,"client_ip":"192.168.65.1"}
 ```
+<img width="1431" height="417" alt="image" src="https://github.com/user-attachments/assets/9ec0f4dd-aff8-4c26-8114-81cdf17c09ae" />
+
 
 ## Підтвердження Graceful Shutdown
 
@@ -79,9 +84,9 @@ kill <pid>
 Логи після надсилання сигналу:
 
 ```json
-{"time":"2026-02-16T12:05:00.000000+02:00","level":"INFO","msg":"shutting down server"}
-{"time":"2026-02-16T12:05:00.005000+02:00","level":"INFO","msg":"server exited properly"}
+{"time":"2026-02-22T17:03:08.060873008Z","level":"INFO","msg":"shutting down server"}
+{"time":"2026-02-22T17:03:08.060955342Z","level":"INFO","msg":"server exited properly"}
 ```
 
-<!-- TODO: скриншот терміналу з логами graceful shutdown -->
-![Graceful Shutdown](screenshots/graceful-shutdown.png)
+<img width="1437" height="432" alt="image" src="https://github.com/user-attachments/assets/a2396e63-0544-44e8-b073-57076464b0fa" />
+
