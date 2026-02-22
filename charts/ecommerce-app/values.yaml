@@ -1,0 +1,42 @@
+replicaCount: 2
+
+image:
+  repository: ecommerce-app
+  tag: latest
+  pullPolicy: Never
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+app:
+  port: 8080
+
+config:
+  dbHost: postgres-service
+  dbPort: "5432"
+  dbUser: postgres
+  dbName: lab2
+  dbSslmode: disable
+  addr: ":8080"
+
+secret:
+  dbPassword: postgres
+  jwtSecret: super-secret-key-change-me
+  telegramToken: dummy-token
+
+postgres:
+  enabled: true
+  image: postgres:17-alpine
+  user: postgres
+  password: postgres
+  database: lab2
