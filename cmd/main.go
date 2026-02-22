@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -27,6 +27,11 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
 	cfg := config.NewConfig()
 
 	sessionTTL := 7 * 24 * time.Hour
@@ -37,14 +42,16 @@ func main() {
 	ctx := context.Background()
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("connect to database: %s", err)
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("ping database: %s", err)
+		slog.Error("failed to ping database", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Connected to database")
+	slog.Info("connected to database")
 
 	queries := sqlc.New(pool)
 
@@ -60,9 +67,10 @@ func main() {
 	authHandler := handlers.NewAuthHandler(authService)
 	recoveryHandler := handlers.NewRecoveryHandler(recoveryService)
 
-	router := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
 	router.Use(gin.Recovery())
-	router.Use(gin.Logger())
+	router.Use(middleware.JSONLogger(logger))
 
 	router.GET("/health", func(c *gin.Context) {
 		if err := pool.Ping(c.Request.Context()); err != nil {
@@ -128,9 +136,10 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("Starting server on %s...\n", cfg.Addr)
+		slog.Info("server started", "addr", cfg.Addr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("listen error: %s\n", err)
+			slog.Error("listen error", "error", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -139,28 +148,31 @@ func main() {
 
 	<-sigCtx.Done()
 
-	log.Println("SIGTERM received. Starting graceful shutdown...")
+	slog.Info("shutting down server")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("Server forced to shutdown: %s", err)
+		slog.Error("forced shutdown", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Server exited properly")
+	slog.Info("server exited properly")
 }
 
 func runMigrations(databaseURL string) {
 	m, err := migrate.New("file://db/migrations", databaseURL)
 	if err != nil {
-		log.Fatalf("create migrate instance: %s", err)
+		slog.Error("failed to create migrate instance", "error", err)
+		os.Exit(1)
 	}
 	defer m.Close()
 
 	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatalf("run migrations: %s", err)
+		slog.Error("failed to run migrations", "error", err)
+		os.Exit(1)
 	}
 
-	log.Println("Migrations applied successfully")
+	slog.Info("migrations applied")
 }
